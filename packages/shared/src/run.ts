@@ -39,6 +39,14 @@ export interface ExtractionAttempt {
   createdAt: string;
 }
 
+export interface CaseHallucinationFlag {
+  fieldPath: string;
+  value: string;
+  grounded: boolean;
+  score: number;
+  method: "substring" | "token-coverage" | "none";
+}
+
 export interface CaseEvaluation {
   aggregateScore: number;
   chiefComplaintScore: number;
@@ -61,6 +69,7 @@ export interface CaseEvaluation {
   };
   followUpScore: number;
   hallucinationCount: number;
+  hallucinationFlags?: CaseHallucinationFlag[];
   schemaInvalidEscaped: boolean;
 }
 

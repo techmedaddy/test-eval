@@ -209,7 +209,11 @@ function scoreFollowUp(
 export function evaluateCase(
   predicted: ClinicalExtraction,
   gold: ClinicalExtraction,
-  options?: { schemaInvalidEscaped?: boolean; hallucinationCount?: number },
+  options?: {
+    schemaInvalidEscaped?: boolean;
+    hallucinationCount?: number;
+    hallucinationFlags?: HallucinationFlag[];
+  },
 ): CaseEvaluation {
   const chiefComplaintScore = scoreChiefComplaint(predicted.chief_complaint, gold.chief_complaint);
   const vitalsScore = scoreVitals(predicted.vitals, gold.vitals);
@@ -236,6 +240,7 @@ export function evaluateCase(
     plan,
     followUpScore,
     hallucinationCount: options?.hallucinationCount ?? 0,
+    hallucinationFlags: options?.hallucinationFlags,
     schemaInvalidEscaped: options?.schemaInvalidEscaped ?? false,
   };
 }
@@ -254,6 +259,7 @@ export function evaluateCaseWithGrounding(
   const evaluation = evaluateCase(predicted, gold, {
     schemaInvalidEscaped: options?.schemaInvalidEscaped ?? false,
     hallucinationCount: hallucination.count,
+    hallucinationFlags: hallucination.flags,
   });
 
   return {

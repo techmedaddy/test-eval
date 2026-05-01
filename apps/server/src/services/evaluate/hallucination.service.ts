@@ -1,5 +1,5 @@
 import type { ClinicalExtraction } from "@test-evals/shared";
-import { normalizeText, tokenize } from "./normalize";
+import { normalizeText } from "./normalize";
 
 export interface HallucinationFlag {
   fieldPath: string;
@@ -9,11 +9,25 @@ export interface HallucinationFlag {
   method: "substring" | "token-coverage" | "none";
 }
 
+const GROUNDING_TOKEN_COVERAGE_THRESHOLD = 0.6;
+
+function normalizeForGrounding(value: string): string {
+  return normalizeText(value).replace(/\s*\/\s*/g, "/").replace(/\s*\.\s*/g, ".");
+}
+
+function groundingTokens(value: string): string[] {
+  const normalized = normalizeForGrounding(value);
+  if (!normalized) return [];
+
+  const tokenMatches = normalized.match(/[a-z0-9]+(?:\.[a-z0-9]+)?/g);
+  return tokenMatches?.filter(Boolean) ?? [];
+}
+
 function fuzzyTokenCoverageScore(candidate: string, transcript: string): number {
-  const candidateTokens = tokenize(candidate);
+  const candidateTokens = groundingTokens(candidate);
   if (candidateTokens.length === 0) return 1;
 
-  const transcriptTokenSet = new Set(tokenize(transcript));
+  const transcriptTokenSet = new Set(groundingTokens(transcript));
   if (transcriptTokenSet.size === 0) return 0;
 
   let found = 0;
@@ -27,8 +41,8 @@ function fuzzyTokenCoverageScore(candidate: string, transcript: string): number 
 }
 
 function checkGrounding(value: string, transcript: string): Omit<HallucinationFlag, "fieldPath" | "value"> {
-  const normalizedValue = normalizeText(value);
-  const normalizedTranscript = normalizeText(transcript);
+  const normalizedValue = normalizeForGrounding(value);
+  const normalizedTranscript = normalizeForGrounding(transcript);
 
   if (!normalizedValue) {
     return {
@@ -47,7 +61,7 @@ function checkGrounding(value: string, transcript: string): Omit<HallucinationFl
   }
 
   const coverage = fuzzyTokenCoverageScore(normalizedValue, normalizedTranscript);
-  const grounded = coverage >= 0.75;
+  const grounded = coverage >= GROUNDING_TOKEN_COVERAGE_THRESHOLD;
 
   return {
     grounded,

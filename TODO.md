@@ -13,6 +13,11 @@
 - [x] Retry-with-validation-feedback loop implemented (max 3 attempts with attempt logs)
 - [x] Prompt hash + token usage capture wired (including cache read/write token fields)
 - [x] Evaluator core implemented (field-specific scoring + aggregate scoring)
+- [x] Phase 3 evaluator verification completed:
+  - [x] Metric mapping audited against assignment spec (chief complaint fuzzy, vitals exact+tolerance, meds set PRF1+normalization, diagnoses set F1+ICD bonus, plan set F1, follow-up interval exact + reason fuzzy)
+  - [x] Hallucination validation run on positive/negative fixtures
+  - [x] Case-level hallucination flags included in evaluation payload
+  - [x] Run-level hallucination counts verified against summed case counts
 - [x] Hallucination detector implemented and counted in run data
 - [x] Runner core implemented with bounded concurrency + rate-limit backoff + jitter
 - [x] Phase 2 hardening completed:
