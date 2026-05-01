@@ -56,6 +56,13 @@
 - [x] 3.4 Prompt caching instrumentation retained for static blocks and captured via token usage (`cache_read_input_tokens`, `cache_write_input_tokens`)
 - [x] Exit criteria smoke: one-case retry flow returns schema-valid JSON with attempt logs (`bun run eval -- --strategy=zero_shot --retry-smoke`)
 
+## Phase 4 — Evaluator implementation
+- [x] 4.1 Normalization utilities (case/punctuation cleanup, med frequency normalization, unit normalization)
+- [x] 4.2 Per-field scoring implemented (chief complaint fuzzy, vitals exact+tolerance, meds set F1, diagnoses set F1 + ICD bonus, plan set F1, follow-up interval+reason)
+- [x] 4.3 Hallucination detector added (substring + normalized token-coverage grounding with flags + count)
+- [x] 4.4 Aggregate output added (per-case evaluations + per-field run aggregates + run summary tokens/cost/wall-time/schema/hallucination totals)
+- [x] Exit criteria smoke passed on synthetic fixtures and real sample case (`case_001`)
+
 ## Blockers (update immediately)
 - [ ] Missing real secrets for runtime execution: `ANTHROPIC_API_KEY`, production-grade `BETTER_AUTH_SECRET`
 - [x] DB credentials validated on compose-managed Postgres (`localhost:55433`) with successful smoke insert/query
