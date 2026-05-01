@@ -35,6 +35,13 @@
 - [x] Project runs locally (validated by starting `apps/server` and `apps/web` dev servers)
 - [x] DB reachable (validated network reachability on `localhost:5433`)
 
+## Phase 1 — Monorepo foundation
+- [x] Create `packages/shared` with extraction types + run/case/result/trace/token DTOs
+- [x] Create `packages/llm` with Anthropic wrapper + strategy interface + prompt hash + cache hooks
+- [x] Wire scripts (`bun run eval -- --strategy=...`) at root and server
+- [x] Ensure `@test-evals/shared` / `@test-evals/llm` imports resolve in server + web
+- [x] Install deps and verify with `bun run check-types`
+
 ## Blockers (update immediately)
 - [ ] Missing real secrets for runtime execution: `ANTHROPIC_API_KEY`, production-grade `BETTER_AUTH_SECRET`
 - [ ] DB credentials not yet validated for SQL auth (server reachable, but `psql` auth failed without password)
