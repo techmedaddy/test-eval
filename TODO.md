@@ -38,10 +38,10 @@
   - [x] `GET /api/v1/runs/compare?left=<id>&right=<id>`
 - [x] Add SSE route for run progress stream
   - [x] `GET /api/v1/runs/:id/events`
-- [ ] Dashboard implementation
-  - [ ] Runs list UI
-  - [ ] Run detail UI (transcript, gold vs prediction diff, attempt trace)
-  - [ ] Compare view UI (per-field deltas + winner)
+- [x] Dashboard implementation
+  - [x] Runs list UI
+  - [x] Run detail UI (transcript, gold vs prediction diff, attempt trace)
+  - [x] Compare view UI (per-field deltas + winner)
 - [ ] CLI reproducibility completion
   - [ ] Full dataset eval mode from `bun run eval -- --strategy=... --model=...`
   - [ ] Print summary table (scores/tokens/cost/time)

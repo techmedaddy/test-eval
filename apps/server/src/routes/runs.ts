@@ -6,6 +6,7 @@ import { runAttempts, runCases, runs } from "@test-evals/db/schema/eval";
 import { listStrategies } from "@test-evals/llm";
 import type { PromptStrategy } from "@test-evals/shared";
 import { getRunnerService } from "../services/runner/runner.service";
+import { loadDatasetCase } from "../services/runner/dataset";
 import { runnerProgressBus } from "../services/runner/progress-bus";
 
 const createRunSchema = z.object({
@@ -28,6 +29,7 @@ const listCasesQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   status: z.enum(["queued", "running", "completed", "failed", "skipped"]).optional(),
   include_attempts: z.coerce.boolean().default(false),
+  include_transcript: z.coerce.boolean().default(false),
 });
 
 function toIsoOrNull(value: Date | null): string | null {
@@ -344,6 +346,24 @@ runsRoutes.get("/api/v1/runs/:id/cases", async (c) => {
 
   const caseIds = rows.map((row) => row.id);
 
+  const transcriptById = new Map<string, string | null>();
+  if (parsed.data.include_transcript) {
+    const transcriptRows = await Promise.all(
+      rows.map(async (row) => {
+        try {
+          const datasetCase = await loadDatasetCase(row.transcriptId);
+          return [row.transcriptId, datasetCase.transcript] as const;
+        } catch {
+          return [row.transcriptId, null] as const;
+        }
+      }),
+    );
+
+    for (const [transcriptId, transcript] of transcriptRows) {
+      transcriptById.set(transcriptId, transcript);
+    }
+  }
+
   const attemptsByCase = new Map<string, Array<typeof runAttempts.$inferSelect>>();
   if (parsed.data.include_attempts && caseIds.length > 0) {
     const attempts = await db.query.runAttempts.findMany({
@@ -415,6 +435,7 @@ runsRoutes.get("/api/v1/runs/:id/cases", async (c) => {
       startedAt: toIsoOrNull(row.startedAt),
       completedAt: toIsoOrNull(row.completedAt),
       error: row.error,
+      transcript: parsed.data.include_transcript ? (transcriptById.get(row.transcriptId) ?? null) : undefined,
       prediction: row.prediction,
       gold: row.gold,
       evaluation: row.evaluation,
