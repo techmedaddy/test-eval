@@ -241,7 +241,7 @@ runsRoutes.get("/api/v1/runs/:id", async (c) => {
     return c.json({ error: "Missing run id" }, 400);
   }
 
-  const [row, byStatusRows] = await Promise.all([
+  const [row, byStatusRows, cacheStatsRows] = await Promise.all([
     db.query.runs.findFirst({ where: eq(runs.id, runId) }),
     db
       .select({
@@ -251,6 +251,13 @@ runsRoutes.get("/api/v1/runs/:id", async (c) => {
       .from(runCases)
       .where(eq(runCases.runId, runId))
       .groupBy(runCases.status),
+    db
+      .select({
+        cacheHits: sql<number>`count(*) filter (where ${runCases.cacheHit} = true)::int`,
+        freshExtractions: sql<number>`count(*) filter (where ${runCases.cacheHit} = false and ${runCases.status} = 'completed')::int`,
+      })
+      .from(runCases)
+      .where(eq(runCases.runId, runId)),
   ]);
 
   if (!row) {
@@ -271,6 +278,8 @@ runsRoutes.get("/api/v1/runs/:id", async (c) => {
     }
   }
 
+  const cacheStats = cacheStatsRows[0] ?? { cacheHits: 0, freshExtractions: 0 };
+
   return c.json({
     ...summarizeRun(row),
     perFieldAggregate: {
@@ -290,6 +299,10 @@ runsRoutes.get("/api/v1/runs/:id", async (c) => {
       followUpScore: row.followUpScore,
     },
     caseStatusCounts: byStatus,
+    extractionSourceSummary: {
+      cacheHits: cacheStats.cacheHits,
+      freshExtractions: cacheStats.freshExtractions,
+    },
     datasetFilter: row.datasetFilter,
     force: row.force,
     error: row.error,
@@ -368,6 +381,7 @@ runsRoutes.get("/api/v1/runs/:id/cases", async (c) => {
       transcriptId: row.transcriptId,
       status: row.status,
       cacheHit: row.cacheHit,
+      extractionSource: row.cacheHit ? "cache" : "fresh",
       aggregateScore: row.aggregateScore,
       chiefComplaintScore: row.chiefComplaintScore,
       vitalsScore: row.vitalsScore,

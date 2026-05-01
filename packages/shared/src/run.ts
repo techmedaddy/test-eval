@@ -132,6 +132,8 @@ export type RunProgressEvent =
       transcriptId: string;
       completed: number;
       total: number;
+      cacheHit: boolean;
+      source: "cache" | "fresh";
       at: string;
     }
   | {

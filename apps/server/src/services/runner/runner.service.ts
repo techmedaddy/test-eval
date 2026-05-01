@@ -209,6 +209,8 @@ export class RunnerService {
     transcript: string;
     strategy: PromptStrategy;
     model: string;
+    runId: string;
+    transcriptId: string;
   }) {
     for (let attempt = 0; attempt < MAX_RATE_LIMIT_RETRIES; attempt += 1) {
       try {
@@ -226,6 +228,18 @@ export class RunnerService {
         }
 
         const delay = BASE_BACKOFF_MS * 2 ** attempt + jitterMs(BASE_BACKOFF_MS);
+        console.warn(
+          JSON.stringify({
+            event: "runner.rate_limit_backoff",
+            runId: params.runId,
+            transcriptId: params.transcriptId,
+            strategy: params.strategy,
+            model: params.model,
+            retryAttempt: attempt + 1,
+            maxRetries: MAX_RATE_LIMIT_RETRIES,
+            delayMs: delay,
+          }),
+        );
         await sleep(delay);
       }
     }
@@ -270,16 +284,23 @@ export class RunnerService {
     };
   }
 
-  private async publishCaseProgress(runId: string, transcriptId: string): Promise<void> {
-    const row = await db.query.runs.findFirst({ where: eq(runs.id, runId) });
+  private async publishCaseProgress(params: {
+    runId: string;
+    transcriptId: string;
+    cacheHit: boolean;
+    source: "cache" | "fresh";
+  }): Promise<void> {
+    const row = await db.query.runs.findFirst({ where: eq(runs.id, params.runId) });
     if (!row) return;
 
-    runnerProgressBus.publish(runId, {
+    runnerProgressBus.publish(params.runId, {
       type: "case_completed",
-      runId,
-      transcriptId,
+      runId: params.runId,
+      transcriptId: params.transcriptId,
       completed: row.completedCases,
       total: row.totalCases,
+      cacheHit: params.cacheHit,
+      source: params.source,
       at: new Date().toISOString(),
     });
   }
@@ -363,7 +384,12 @@ export class RunnerService {
           })
           .where(eq(runs.id, params.runId));
 
-        await this.publishCaseProgress(params.runId, params.transcriptId);
+        await this.publishCaseProgress({
+          runId: params.runId,
+          transcriptId: params.transcriptId,
+          cacheHit: true,
+          source: "cache",
+        });
         return;
       }
 
@@ -371,6 +397,8 @@ export class RunnerService {
         transcript: data.transcript,
         strategy: params.strategy,
         model: params.model,
+        runId: params.runId,
+        transcriptId: params.transcriptId,
       });
 
       if (!extraction.promptHash) {
@@ -449,7 +477,12 @@ export class RunnerService {
           })
           .where(eq(runs.id, params.runId));
 
-        await this.publishCaseProgress(params.runId, params.transcriptId);
+        await this.publishCaseProgress({
+          runId: params.runId,
+          transcriptId: params.transcriptId,
+          cacheHit: false,
+          source: "fresh",
+        });
         return;
       }
 
@@ -540,7 +573,12 @@ export class RunnerService {
         })
         .where(eq(runs.id, params.runId));
 
-      await this.publishCaseProgress(params.runId, params.transcriptId);
+      await this.publishCaseProgress({
+        runId: params.runId,
+        transcriptId: params.transcriptId,
+        cacheHit: false,
+        source: "fresh",
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Case execution failed";
 
@@ -567,7 +605,12 @@ export class RunnerService {
         })
         .where(eq(runs.id, params.runId));
 
-      await this.publishCaseProgress(params.runId, params.transcriptId);
+      await this.publishCaseProgress({
+        runId: params.runId,
+        transcriptId: params.transcriptId,
+        cacheHit: false,
+        source: "fresh",
+      });
     }
   }
 

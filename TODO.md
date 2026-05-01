@@ -15,6 +15,11 @@
 - [x] Evaluator core implemented (field-specific scoring + aggregate scoring)
 - [x] Hallucination detector implemented and counted in run data
 - [x] Runner core implemented with bounded concurrency + rate-limit backoff + jitter
+- [x] Phase 2 hardening completed:
+  - [x] Idempotency verified end-to-end (cache reused for same strategy+model+transcript unless `force=true`)
+  - [x] Explicit extraction-source metadata exposed (`cacheHit` + `extractionSource` in case APIs and SSE case events)
+  - [x] Resumability edge case verified (completed cases not rerun; resume processes only queued/running)
+  - [x] 429 backoff logging added with structured fields (runId, transcriptId, retryAttempt, delayMs)
 - [x] Run control endpoints implemented:
   - [x] `POST /api/v1/runs`
   - [x] `POST /api/v1/runs/:id/resume`
