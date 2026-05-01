@@ -17,6 +17,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.56.0",
     "@test-evals/shared": "workspace:*",
+    "ajv": "^8.17.1",
     "zod": "catalog:"
   },
   "devDependencies": {

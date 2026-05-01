@@ -10,6 +10,13 @@ import { getStrategyBundle, renderUserPrompt } from "./strategies";
 
 const EXTRACTION_TOOL_NAME = "record_clinical_extraction";
 
+export class StructuredOutputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "StructuredOutputError";
+  }
+}
+
 export interface AnthropicExtractionClientOptions {
   apiKey: string;
   defaultModel?: string;
@@ -17,8 +24,10 @@ export interface AnthropicExtractionClientOptions {
 }
 
 export interface ExtractionCallResult {
-  extraction: ClinicalExtraction | null;
+  extraction: ClinicalExtraction;
   rawText: string;
+  requestSystemPrompt: string;
+  requestUserPrompt: string;
   promptHash: string;
   strategy: PromptStrategy;
   model: string;
@@ -47,13 +56,17 @@ export class AnthropicExtractionClient {
     strategy: PromptStrategy;
     model?: string;
     maxTokens?: number;
+    feedback?: string;
   }): Promise<ExtractionCallResult> {
     const model = params.model ?? this.defaultModel;
     const bundle = getStrategyBundle(params.strategy);
     const promptHash = createPromptHash(bundle);
 
     const systemBlocks = [cacheTextBlock(bundle.systemPrompt)];
-    const userPrompt = renderUserPrompt(bundle.userPromptTemplate, params.transcript);
+    const baseUserPrompt = renderUserPrompt(bundle.userPromptTemplate, params.transcript);
+    const userPrompt = params.feedback
+      ? `${baseUserPrompt}\n\nValidation feedback from previous attempt:\n${params.feedback}\n\nReturn corrected output using the tool.`
+      : baseUserPrompt;
 
     const fewShotMessages = bundle.fewShotExamples.flatMap((example) => {
       return [
@@ -102,6 +115,8 @@ export class AnthropicExtractionClient {
     return {
       extraction,
       rawText: this.extractText(response),
+      requestSystemPrompt: bundle.systemPrompt,
+      requestUserPrompt: userPrompt,
       promptHash,
       strategy: params.strategy,
       model,
@@ -110,15 +125,21 @@ export class AnthropicExtractionClient {
     };
   }
 
-  private extractToolPayload(response: any): ClinicalExtraction | null {
+  private extractToolPayload(response: any): ClinicalExtraction {
     const blocks = Array.isArray(response?.content) ? response.content : [];
 
     const toolUse = blocks.find(
       (block: any) => block?.type === "tool_use" && block?.name === EXTRACTION_TOOL_NAME,
     );
 
-    if (!toolUse?.input || typeof toolUse.input !== "object") {
-      return null;
+    if (!toolUse) {
+      throw new StructuredOutputError(
+        "Model did not return required tool_use block for structured extraction output.",
+      );
+    }
+
+    if (!toolUse.input || typeof toolUse.input !== "object") {
+      throw new StructuredOutputError("Tool payload missing or malformed.");
     }
 
     return toolUse.input as ClinicalExtraction;

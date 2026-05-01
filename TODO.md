@@ -49,6 +49,13 @@
 - [x] Generate SQL migrations (`packages/db/src/migrations/0000_minor_grandmaster.sql`, `0001_conscious_juggernaut.sql`)
 - [x] 2.3 Migrate + validate (`bun run db:push` + smoke insert/query)
 
+## Phase 3 — Extractor foundation
+- [x] 3.1 Prompt strategies implemented as swappable modules (`zero_shot`, `few_shot`, `cot`) via strategy registry
+- [x] 3.2 Structured output path enforced via Anthropic tool use (no free-form JSON parse fallback)
+- [x] 3.3 Retry-with-feedback implemented (AJV validation, validation-error feedback loop, max 3 attempts, attempt logs)
+- [x] 3.4 Prompt caching instrumentation retained for static blocks and captured via token usage (`cache_read_input_tokens`, `cache_write_input_tokens`)
+- [x] Exit criteria smoke: one-case retry flow returns schema-valid JSON with attempt logs (`bun run eval -- --strategy=zero_shot --retry-smoke`)
+
 ## Blockers (update immediately)
 - [ ] Missing real secrets for runtime execution: `ANTHROPIC_API_KEY`, production-grade `BETTER_AUTH_SECRET`
 - [x] DB credentials validated on compose-managed Postgres (`localhost:55433`) with successful smoke insert/query

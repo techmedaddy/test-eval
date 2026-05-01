@@ -20,6 +20,11 @@ export interface StrategyPromptBundle {
   fewShotExamples: FewShotExample[];
 }
 
+export interface PromptStrategyModule {
+  strategy: PromptStrategy;
+  createBundle: () => StrategyPromptBundle;
+}
+
 export interface ExtractInput {
   transcript: string;
   strategy: PromptStrategy;
