@@ -128,59 +128,81 @@ export class RunnerService {
   }
 
   private async executeRun(runId: string): Promise<void> {
-    await db
-      .update(runs)
-      .set({
-        status: "running",
-        error: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(runs.id, runId));
+    try {
+      await db
+        .update(runs)
+        .set({
+          status: "running",
+          error: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(runs.id, runId));
 
-    const runRow = await db.query.runs.findFirst({ where: eq(runs.id, runId) });
-    if (!runRow) return;
+      const runRow = await db.query.runs.findFirst({ where: eq(runs.id, runId) });
+      if (!runRow) return;
 
-    runnerProgressBus.publish(runId, {
-      type: "run_started",
-      runId,
-      at: new Date().toISOString(),
-    });
+      runnerProgressBus.publish(runId, {
+        type: "run_started",
+        runId,
+        at: new Date().toISOString(),
+      });
 
-    const pendingCases = await db.query.runCases.findMany({
-      where: and(eq(runCases.runId, runId), inArray(runCases.status, ["queued", "running"])),
-      orderBy: (table, { asc }) => [asc(table.createdAt)],
-    });
+      const pendingCases = await db.query.runCases.findMany({
+        where: and(eq(runCases.runId, runId), inArray(runCases.status, ["queued", "running"])),
+        orderBy: (table, { asc }) => [asc(table.createdAt)],
+      });
 
-    if (pendingCases.length === 0) {
-      await this.finalizeRun(runId);
-      return;
-    }
-
-    let cursor = 0;
-    const workerCount = Math.min(MAX_CASE_CONCURRENCY, pendingCases.length);
-
-    const worker = async () => {
-      while (cursor < pendingCases.length) {
-        const currentIdx = cursor;
-        cursor += 1;
-
-        const runCase = pendingCases[currentIdx];
-        if (!runCase) continue;
-
-        await this.processRunCase({
-          model: runRow.model,
-          strategy: runRow.strategy as PromptStrategy,
-          runId,
-          runCaseId: runCase.id,
-          transcriptId: runCase.transcriptId,
-          force: runRow.force,
-        });
+      if (pendingCases.length === 0) {
+        await this.finalizeRun(runId);
+        return;
       }
-    };
 
-    await Promise.all(Array.from({ length: workerCount }, () => worker()));
+      let cursor = 0;
+      const workerCount = Math.min(MAX_CASE_CONCURRENCY, pendingCases.length);
 
-    await this.finalizeRun(runId);
+      const worker = async () => {
+        while (cursor < pendingCases.length) {
+          const currentIdx = cursor;
+          cursor += 1;
+
+          const runCase = pendingCases[currentIdx];
+          if (!runCase) continue;
+
+          await this.processRunCase({
+            model: runRow.model,
+            strategy: runRow.strategy as PromptStrategy,
+            runId,
+            runCaseId: runCase.id,
+            transcriptId: runCase.transcriptId,
+            force: runRow.force,
+          });
+        }
+      };
+
+      await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+      await this.finalizeRun(runId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Run execution failed";
+
+      await db
+        .update(runs)
+        .set({
+          status: "failed",
+          error: message,
+          completedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(runs.id, runId));
+
+      runnerProgressBus.publish(runId, {
+        type: "run_failed",
+        runId,
+        status: "failed",
+        error: message,
+        at: new Date().toISOString(),
+      });
+    }
   }
 
   private async extractCaseWithBackoff(params: {
@@ -592,10 +614,20 @@ export class RunnerService {
       })
       .where(eq(runs.id, runId));
 
+    if (finalStatus === "failed") {
+      runnerProgressBus.publish(runId, {
+        type: "run_failed",
+        runId,
+        status: "failed",
+        at: new Date().toISOString(),
+      });
+      return;
+    }
+
     runnerProgressBus.publish(runId, {
       type: "run_completed",
       runId,
-      status: finalStatus,
+      status: "completed",
       at: new Date().toISOString(),
     });
   }

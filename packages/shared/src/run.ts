@@ -137,6 +137,13 @@ export type RunProgressEvent =
   | {
       type: "run_completed";
       runId: string;
-      status: Extract<RunStatus, "completed" | "failed" | "cancelled">;
+      status: Extract<RunStatus, "completed" | "cancelled">;
+      at: string;
+    }
+  | {
+      type: "run_failed";
+      runId: string;
+      status: "failed";
+      error?: string;
       at: string;
     };
