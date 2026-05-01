@@ -28,6 +28,23 @@ function feedbackFromErrors(errors: string[], previousOutput: unknown): string {
   return `Your previous tool output failed JSON Schema validation.\n\nErrors:\n${normalizedErrors}\n\nPrevious output:\n${outputPreview}\n\nFix only the issues above and return a corrected tool payload.`;
 }
 
+export class RateLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RateLimitError";
+  }
+}
+
+function isRateLimitLikeError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const anyError = error as { status?: number; message?: string; error?: { type?: string; message?: string } };
+  const status = anyError.status;
+  const message = `${anyError.message ?? ""} ${anyError.error?.message ?? ""}`.toLowerCase();
+
+  return status === 429 || message.includes("rate limit") || message.includes("429");
+}
+
 export class ClinicalExtractor {
   constructor(private readonly client: Pick<AnthropicExtractionClient, "extract">) {}
 
@@ -91,6 +108,10 @@ export class ClinicalExtractor {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown extraction failure";
         const structured = error instanceof StructuredOutputError;
+
+        if (isRateLimitLikeError(error)) {
+          throw new RateLimitError(message);
+        }
 
         attempts.push({
           attempt: attemptNumber,

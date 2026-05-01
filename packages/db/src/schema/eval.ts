@@ -29,6 +29,7 @@ export const runs = pgTable(
     model: text("model").notNull(),
     promptHash: text("prompt_hash").notNull(),
     datasetFilter: jsonb("dataset_filter").$type<string[]>().default([]).notNull(),
+    force: boolean("force").default(false).notNull(),
     status: runStatusEnum("status").default("queued").notNull(),
 
     totalCases: integer("total_cases").default(0).notNull(),
@@ -87,6 +88,7 @@ export const runCases = pgTable(
     transcriptId: text("transcript_id").notNull(),
 
     status: runCaseStatusEnum("status").default("queued").notNull(),
+    cacheHit: boolean("cache_hit").default(false).notNull(),
 
     prediction: jsonb("prediction").$type<unknown | null>(),
     gold: jsonb("gold").$type<unknown | null>(),

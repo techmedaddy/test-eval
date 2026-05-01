@@ -63,6 +63,11 @@
 - [x] 4.4 Aggregate output added (per-case evaluations + per-field run aggregates + run summary tokens/cost/wall-time/schema/hallucination totals)
 - [x] Exit criteria smoke passed on synthetic fixtures and real sample case (`case_001`)
 
+## Phase 5 — Runner & APIs
+- [x] 5.1 Run start endpoint added: `POST /api/v1/runs` with strategy/model/filter payload
+- [x] 5.2 Controlled concurrency implemented (semaphore-style worker pool max 5) with 429 backoff+jitter policy and bounded retries
+- [x] 5.3 Resumability implemented with persisted case status + `POST /api/v1/runs/:id/resume` processing only incomplete (`queued`/`running`) cases
+
 ## Blockers (update immediately)
 - [ ] Missing real secrets for runtime execution: `ANTHROPIC_API_KEY`, production-grade `BETTER_AUTH_SECRET`
 - [x] DB credentials validated on compose-managed Postgres (`localhost:55433`) with successful smoke insert/query
