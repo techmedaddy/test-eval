@@ -1,79 +1,67 @@
 # TODO — test-evals assignment
 
-## Scope Freeze (Phase 0.1)
+## Execution Board
 
-### Priority: Hard requirements first
-- [ ] Structured output/tool use (no raw JSON.parse path)
-- [ ] Retry-with-validation-feedback loop (max 3), all attempts logged
-- [ ] Prompt caching wired and visible (`cache_read_input_tokens`)
-- [ ] Concurrency control (max 5) + documented 429 backoff behavior
-- [ ] Resumable runs (`/runs/:id/resume`) + test
-- [ ] Idempotency for same `{strategy, model, transcript_id}` unless `force=true`
-- [ ] Correct per-field metrics (fuzzy/exact+tolerance/set-F1)
-- [ ] Hallucination detection + reporting
-- [ ] Compare view with per-field deltas and winner
-- [ ] CLI eval command (`bun run eval -- --strategy=...`)
-- [ ] >= 8 tests for required scenarios
+### ✅ Done
+- [x] Phase 0.1 hard blocker fixed: `apps/server/src/services/runner/dataset.ts` (`return files...`)
+- [x] `bun run check-types` passes from repo root
+- [x] Focus branch created: `feat/eval-harness-finish`
+- [x] Monorepo foundations in place (`apps/*`, `packages/*`, workspace wiring)
+- [x] DB schema + migrations + persistence layer for runs/cases/attempts/cache
+- [x] Prompt strategies implemented (`zero_shot`, `few_shot`, `cot`) as swappable modules
+- [x] Structured extraction path implemented (tool/structured path; no free-form-only fallback)
+- [x] Retry-with-validation-feedback loop implemented (max 3 attempts with attempt logs)
+- [x] Prompt hash + token usage capture wired (including cache read/write token fields)
+- [x] Evaluator core implemented (field-specific scoring + aggregate scoring)
+- [x] Hallucination detector implemented and counted in run data
+- [x] Runner core implemented with bounded concurrency + rate-limit backoff + jitter
+- [x] Run control endpoints implemented:
+  - [x] `POST /api/v1/runs`
+  - [x] `POST /api/v1/runs/:id/resume`
+
+### 🔄 In Progress (remaining hard requirements)
+- [ ] Build run read APIs for dashboard consumption
+  - [ ] `GET /api/v1/runs` (list)
+  - [ ] `GET /api/v1/runs/:id` (summary + aggregates)
+  - [ ] `GET /api/v1/runs/:id/cases` (case table)
+- [ ] Add compare API for per-field deltas + winner
+  - [ ] `GET /api/v1/runs/compare?left=<id>&right=<id>`
+- [ ] Add SSE route for run progress stream
+  - [ ] `GET /api/v1/runs/:id/events`
+- [ ] Dashboard implementation
+  - [ ] Runs list UI
+  - [ ] Run detail UI (transcript, gold vs prediction diff, attempt trace)
+  - [ ] Compare view UI (per-field deltas + winner)
+- [ ] CLI reproducibility completion
+  - [ ] Full dataset eval mode from `bun run eval -- --strategy=... --model=...`
+  - [ ] Print summary table (scores/tokens/cost/time)
+- [ ] Test suite completion (>= 8 required)
+  - [ ] Schema retry path
+  - [ ] Fuzzy medication matching
+  - [ ] Set-F1 correctness (synthetic)
+  - [ ] Hallucination detector positive + negative
+  - [ ] Resumability
+  - [ ] Idempotency
+  - [ ] 429 backoff behavior (mocked SDK)
+  - [ ] Prompt-hash stability
 - [ ] `NOTES.md` with 3-strategy results + findings
 
-### Stretch (only if extra time)
+### ⛔ Blocked
+- [ ] Real runtime secrets not yet provided for full E2E eval with Anthropic
+  - [ ] `ANTHROPIC_API_KEY`
+  - [ ] production-grade `BETTER_AUTH_SECRET`
+
+---
+
+## Stretch (only if extra time)
 - [ ] Prompt diff view
 - [ ] Active-learning hint (top disagreement cases)
 - [ ] Cost guardrail
 - [ ] Second model support in compare
 
-## Phase 0.2 Environment Sanity
-- [x] Bun installed and available
-- [x] Docker + Docker Compose available
-- [x] Confirm required env vars from schema
-- [x] Create server/web env files (`apps/server/.env.example`, `apps/web/.env.example`)
-- [ ] Add real Anthropic key + DB URL + runtime URLs in runtime `.env` files
-
-## Phase 0.3 Tracking Board + Exit Criteria
-- [x] `TODO.md` created with hard requirements as checkboxes
-- [x] Blockers section added and actively maintained
-- [x] Project runs locally (validated by starting `apps/server` and `apps/web` dev servers)
-- [x] DB reachable (validated network reachability on `localhost:5433`)
-
-## Phase 1 — Monorepo foundation
-- [x] Create `packages/shared` with extraction types + run/case/result/trace/token DTOs
-- [x] Create `packages/llm` with Anthropic wrapper + strategy interface + prompt hash + cache hooks
-- [x] Wire scripts (`bun run eval -- --strategy=...`) at root and server
-- [x] Ensure `@test-evals/shared` / `@test-evals/llm` imports resolve in server + web
-- [x] Install deps and verify with `bun run check-types`
-
-## Phase 2 — DB model & persistence
-- [x] 2.1 Schema design in Drizzle (`runs`, `run_cases`, `run_attempts`, `extraction_cache`)
-- [x] 2.2 Persist all required fields: strategy/model/prompt hash/status/timestamps, per-field + aggregate scores, token buckets, cost/wall time, hallucination + schema-failure counts
-- [x] Export schema via `packages/db/src/schema/index.ts`
-- [x] Generate SQL migrations (`packages/db/src/migrations/0000_minor_grandmaster.sql`, `0001_conscious_juggernaut.sql`)
-- [x] 2.3 Migrate + validate (`bun run db:push` + smoke insert/query)
-
-## Phase 3 — Extractor foundation
-- [x] 3.1 Prompt strategies implemented as swappable modules (`zero_shot`, `few_shot`, `cot`) via strategy registry
-- [x] 3.2 Structured output path enforced via Anthropic tool use (no free-form JSON parse fallback)
-- [x] 3.3 Retry-with-feedback implemented (AJV validation, validation-error feedback loop, max 3 attempts, attempt logs)
-- [x] 3.4 Prompt caching instrumentation retained for static blocks and captured via token usage (`cache_read_input_tokens`, `cache_write_input_tokens`)
-- [x] Exit criteria smoke: one-case retry flow returns schema-valid JSON with attempt logs (`bun run eval -- --strategy=zero_shot --retry-smoke`)
-
-## Phase 4 — Evaluator implementation
-- [x] 4.1 Normalization utilities (case/punctuation cleanup, med frequency normalization, unit normalization)
-- [x] 4.2 Per-field scoring implemented (chief complaint fuzzy, vitals exact+tolerance, meds set F1, diagnoses set F1 + ICD bonus, plan set F1, follow-up interval+reason)
-- [x] 4.3 Hallucination detector added (substring + normalized token-coverage grounding with flags + count)
-- [x] 4.4 Aggregate output added (per-case evaluations + per-field run aggregates + run summary tokens/cost/wall-time/schema/hallucination totals)
-- [x] Exit criteria smoke passed on synthetic fixtures and real sample case (`case_001`)
-
-## Phase 5 — Runner & APIs
-- [x] 5.1 Run start endpoint added: `POST /api/v1/runs` with strategy/model/filter payload
-- [x] 5.2 Controlled concurrency implemented (semaphore-style worker pool max 5) with 429 backoff+jitter policy and bounded retries
-- [x] 5.3 Resumability implemented with persisted case status + `POST /api/v1/runs/:id/resume` processing only incomplete (`queued`/`running`) cases
-
-## Blockers (update immediately)
-- [ ] Missing real secrets for runtime execution: `ANTHROPIC_API_KEY`, production-grade `BETTER_AUTH_SECRET`
-- [x] DB credentials validated on compose-managed Postgres (`localhost:55433`) with successful smoke insert/query
-- [x] Root `docker-compose.yml` created (`postgres` + `server` + `web`, no Dockerfiles)
+---
 
 ## Notes
-- Per user instruction: one root `docker-compose.yml` for everything.
-- No manual DB setup.
+- Root `docker-compose.yml` approach retained (postgres + server + web).
 - No Dockerfiles.
+- Focus now: complete run read/compare/SSE APIs, then dashboard, then tests + NOTES.
