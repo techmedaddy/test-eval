@@ -20,14 +20,14 @@
   - [x] `POST /api/v1/runs/:id/resume`
 
 ### 🔄 In Progress (remaining hard requirements)
-- [ ] Build run read APIs for dashboard consumption
-  - [ ] `GET /api/v1/runs` (list)
-  - [ ] `GET /api/v1/runs/:id` (summary + aggregates)
-  - [ ] `GET /api/v1/runs/:id/cases` (case table)
-- [ ] Add compare API for per-field deltas + winner
-  - [ ] `GET /api/v1/runs/compare?left=<id>&right=<id>`
-- [ ] Add SSE route for run progress stream
-  - [ ] `GET /api/v1/runs/:id/events`
+- [x] Build run read APIs for dashboard consumption
+  - [x] `GET /api/v1/runs` (list)
+  - [x] `GET /api/v1/runs/:id` (summary + aggregates)
+  - [x] `GET /api/v1/runs/:id/cases` (case table)
+- [x] Add compare API for per-field deltas + winner
+  - [x] `GET /api/v1/runs/compare?left=<id>&right=<id>`
+- [x] Add SSE route for run progress stream
+  - [x] `GET /api/v1/runs/:id/events`
 - [ ] Dashboard implementation
   - [ ] Runs list UI
   - [ ] Run detail UI (transcript, gold vs prediction diff, attempt trace)
