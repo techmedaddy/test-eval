@@ -42,9 +42,16 @@
 - [x] Ensure `@test-evals/shared` / `@test-evals/llm` imports resolve in server + web
 - [x] Install deps and verify with `bun run check-types`
 
+## Phase 2 — DB model & persistence
+- [x] 2.1 Schema design in Drizzle (`runs`, `run_cases`, `run_attempts`, `extraction_cache`)
+- [x] 2.2 Persist all required fields: strategy/model/prompt hash/status/timestamps, per-field + aggregate scores, token buckets, cost/wall time, hallucination + schema-failure counts
+- [x] Export schema via `packages/db/src/schema/index.ts`
+- [x] Generate SQL migrations (`packages/db/src/migrations/0000_minor_grandmaster.sql`, `0001_conscious_juggernaut.sql`)
+- [x] 2.3 Migrate + validate (`bun run db:push` + smoke insert/query)
+
 ## Blockers (update immediately)
 - [ ] Missing real secrets for runtime execution: `ANTHROPIC_API_KEY`, production-grade `BETTER_AUTH_SECRET`
-- [ ] DB credentials not yet validated for SQL auth (server reachable, but `psql` auth failed without password)
+- [x] DB credentials validated on compose-managed Postgres (`localhost:55433`) with successful smoke insert/query
 - [x] Root `docker-compose.yml` created (`postgres` + `server` + `web`, no Dockerfiles)
 
 ## Notes
