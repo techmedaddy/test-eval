@@ -26,8 +26,19 @@
 - [x] Bun installed and available
 - [x] Docker + Docker Compose available
 - [x] Confirm required env vars from schema
-- [ ] Create server/web env files
-- [ ] Add Anthropic key + DB URL + runtime URLs
+- [x] Create server/web env files (`apps/server/.env.example`, `apps/web/.env.example`)
+- [ ] Add real Anthropic key + DB URL + runtime URLs in runtime `.env` files
+
+## Phase 0.3 Tracking Board + Exit Criteria
+- [x] `TODO.md` created with hard requirements as checkboxes
+- [x] Blockers section added and actively maintained
+- [x] Project runs locally (validated by starting `apps/server` and `apps/web` dev servers)
+- [x] DB reachable (validated network reachability on `localhost:5433`)
+
+## Blockers (update immediately)
+- [ ] Missing real secrets for runtime execution: `ANTHROPIC_API_KEY`, production-grade `BETTER_AUTH_SECRET`
+- [ ] DB credentials not yet validated for SQL auth (server reachable, but `psql` auth failed without password)
+- [x] Root `docker-compose.yml` created (`postgres` + `server` + `web`, no Dockerfiles)
 
 ## Notes
 - Per user instruction: one root `docker-compose.yml` for everything.
