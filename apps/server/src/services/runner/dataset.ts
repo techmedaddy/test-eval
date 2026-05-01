@@ -7,7 +7,7 @@ const GOLD_DIR = new URL("../../../../../data/gold/", import.meta.url);
 export async function listDatasetCaseIds(): Promise<string[]> {
   const files = await readdir(TRANSCRIPTS_DIR, { withFileTypes: true });
 
-  return fileskill -9 32943
+  return files
     .filter((entry) => entry.isFile() && entry.name.endsWith(".txt"))
     .map((entry) => entry.name.replace(/\.txt$/i, ""))
     .sort();
