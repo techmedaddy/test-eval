@@ -12,7 +12,8 @@
     }
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "bun test src/*.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.56.0",

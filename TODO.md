@@ -42,18 +42,20 @@
   - [x] Runs list UI
   - [x] Run detail UI (transcript, gold vs prediction diff, attempt trace)
   - [x] Compare view UI (per-field deltas + winner)
-- [ ] CLI reproducibility completion
-  - [ ] Full dataset eval mode from `bun run eval -- --strategy=... --model=...`
-  - [ ] Print summary table (scores/tokens/cost/time)
-- [ ] Test suite completion (>= 8 required)
-  - [ ] Schema retry path
-  - [ ] Fuzzy medication matching
-  - [ ] Set-F1 correctness (synthetic)
-  - [ ] Hallucination detector positive + negative
-  - [ ] Resumability
-  - [ ] Idempotency
-  - [ ] 429 backoff behavior (mocked SDK)
-  - [ ] Prompt-hash stability
+- [x] CLI reproducibility completion
+  - [x] Full dataset eval mode from `bun run eval -- --strategy=... --model=...`
+  - [x] Print summary table (scores/tokens/cost/time)
+  - [x] Optional helper for multi-strategy runs (`bun run eval:all`)
+- [x] Test suite completion (>= 8 required)
+  - [x] Schema retry path
+  - [x] Fuzzy medication matching
+  - [x] Set-F1 correctness (synthetic)
+  - [x] Hallucination detector positive + negative
+  - [x] Resumability
+  - [x] Idempotency
+  - [x] 429 backoff behavior (mocked SDK)
+  - [x] Prompt-hash stability
+  - [x] Stable test entrypoints (`bun run test`, `bun run test:stable`)
 - [ ] `NOTES.md` with 3-strategy results + findings
 
 ### ⛔ Blocked

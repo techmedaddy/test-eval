@@ -184,6 +184,12 @@ bun run dev
 
 # 5. In another shell — CLI eval
 bun run eval -- --strategy=zero_shot
+
+# Optional: run all prompt strategies sequentially and print comparison table
+bun run eval:all -- --model=claude-haiku-4-5-20251001
+
+# Test suite (stable env defaults for server-side env validation)
+bun run test:stable
 ```
 
 You'll need a Postgres instance running locally. Set `DATABASE_URL` in `apps/server/.env` (e.g. `postgres://postgres:postgres@localhost:5432/healosbench`).
